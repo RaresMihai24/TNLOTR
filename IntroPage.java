@@ -87,11 +87,12 @@ public class IntroPage extends JFrame{
             public void actionPerformed(ActionEvent e) {
                 String username = usernameRegister.getText();
                 String password = String.valueOf(registerPassword.getPassword());
+                String confirmPassword = String.valueOf(registerPasswordConf.getPassword());
                 String email = emailRegister.getText();
                 String referralID = refferalID.getText();
 
                 try {
-                    sendDataToServer(username, password, email, referralID);
+                    sendDataToServer(username, password, confirmPassword, email, referralID);
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                 }
@@ -197,9 +198,32 @@ public class IntroPage extends JFrame{
         return passwordField;
     }
     
-    private void sendDataToServer(String username, String password, String email, String refferalID) throws SQLException {
+    private void sendDataToServer(String username, String password, String confirmPassword, String email, String refferalID) throws SQLException {
         Connection con = null;
         try {
+            
+        if (username.length() < 6 || username.length() > 20) {
+            JOptionPane.showMessageDialog(null, "Username must be between 6 and 20 characters.");
+            return;
+        }
+
+        String passwordRegex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$";
+        if (!password.matches(passwordRegex)) {
+            JOptionPane.showMessageDialog(null, "Password must have at least one uppercase letter, one number, one special character, and be at least 8 characters long.");
+            return;
+        }
+        
+        if (!password.equals(confirmPassword)) {
+            JOptionPane.showMessageDialog(null, "Passwords do not match.");
+            return;
+        }
+        
+         String emailRegex = "^(.+)@(yahoo\\.com|gmail\\.com)$";
+        if (!email.matches(emailRegex)) {
+            JOptionPane.showMessageDialog(null, "Please enter a valid Yahoo or Gmail address.\n Any other type of address is not accepted.");
+            return;
+        }
+        
             con = DriverManager.getConnection("jdbc:mysql://localhost/alpha", "root", "");
 
             String insertQuery = "INSERT INTO accounts (account_name, password, mail, reffered_by) VALUES (?, ?, ?, ?)";
