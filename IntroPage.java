@@ -6,12 +6,15 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -48,9 +51,6 @@ public class IntroPage extends JFrame{
         Clip clip = AudioSystem.getClip();
         clip.open(audioIn);
         clip.start();
-        //System.out.println("Working Directory = " + System.getProperty("user.dir"));
-        Connection con = null;
-        con = DriverManager.getConnection("jdbc:mysql://localhost/alpha","root", "");
         
         frame = new JFrame("TNLOTR");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -70,7 +70,7 @@ public class IntroPage extends JFrame{
         JTextField refferalID = createPlaceholderTextField("Referral ID");
         refferalID.setPreferredSize(new Dimension(160, 30));
         JCheckBox checkBox = new JCheckBox("I agree to the terms and conditions");
-        JCheckBox checkBox2 = new JCheckBox("Remember me");
+        JCheckBox checkBox2 = new JCheckBox("I want to be remembered");
         backgroundImage = new ImageIcon("C:\\Users\\Rares\\Documents\\NetBeansProjects\\TNLOTR1\\background.jpg").getImage();
 
         usernameLogin.setHorizontalAlignment(JTextField.CENTER);
@@ -82,6 +82,22 @@ public class IntroPage extends JFrame{
         refferalID.setHorizontalAlignment(JTextField.CENTER);
         loginPanel.setLayout(new GridBagLayout());
 
+                buttonRegister.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String username = usernameRegister.getText();
+                String password = String.valueOf(registerPassword.getPassword());
+                String email = emailRegister.getText();
+                String referralID = refferalID.getText();
+
+                try {
+                    sendDataToServer(username, password, email, referralID);
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(4, 4, 5, 5);
@@ -179,6 +195,34 @@ public class IntroPage extends JFrame{
         });
 
         return passwordField;
+    }
+    
+    private void sendDataToServer(String username, String password, String email, String refferalID) throws SQLException {
+        Connection con = null;
+        try {
+            con = DriverManager.getConnection("jdbc:mysql://localhost/alpha", "root", "");
+
+            String insertQuery = "INSERT INTO accounts (account_name, password, mail, reffered_by) VALUES (?, ?, ?, ?)";
+            PreparedStatement preparedStatement = con.prepareStatement(insertQuery);
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, password);
+            preparedStatement.setString(3, email);
+            preparedStatement.setString(4, refferalID);
+
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(null, "Registration successful!");
+            } else {
+                JOptionPane.showMessageDialog(null, "Error during registration. Please try again later.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (con != null) {
+                con.close();
+            }
+        }
     }
     
     
