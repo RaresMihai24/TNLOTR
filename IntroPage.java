@@ -12,10 +12,15 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -27,12 +32,13 @@ import javax.swing.*;
 
 public class IntroPage extends JFrame{
     private Image backgroundImage;
-    JFrame frame;
-    JButton buttonLogin = new JButton("Login");
-    JButton buttonRegister = new JButton("Register");
+    public JFrame frame;
+    public JButton buttonLogin = new JButton("Login");
+    public JButton buttonRegister = new JButton("Register");
     public final int width = 1920;
     public final int height = 1080;
-    
+    JCheckBox checkBox = new JCheckBox("I agree to the terms and conditions");
+    JCheckBox checkBox2 = new JCheckBox("I want to be remembered");
     JPanel contentPane = new JPanel() {
         @Override
         protected void paintComponent(Graphics g) {
@@ -69,8 +75,7 @@ public class IntroPage extends JFrame{
         emailRegister.setPreferredSize(new Dimension(160, 30));
         JTextField refferalID = createPlaceholderTextField("Referral ID");
         refferalID.setPreferredSize(new Dimension(160, 30));
-        JCheckBox checkBox = new JCheckBox("I agree to the terms and conditions");
-        JCheckBox checkBox2 = new JCheckBox("I want to be remembered");
+
         backgroundImage = new ImageIcon("C:\\Users\\Rares\\Documents\\NetBeansProjects\\TNLOTR1\\background.jpg").getImage();
 
         usernameLogin.setHorizontalAlignment(JTextField.CENTER);
@@ -94,7 +99,8 @@ public class IntroPage extends JFrame{
                 try {
                     sendDataToServer(username, password, confirmPassword, email, referralID);
                 } catch (SQLException ex) {
-                    ex.printStackTrace();
+                } catch (UnknownHostException ex) {
+                    Logger.getLogger(IntroPage.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         });
@@ -198,18 +204,41 @@ public class IntroPage extends JFrame{
         return passwordField;
     }
     
-    private void sendDataToServer(String username, String password, String confirmPassword, String email, String refferalID) throws SQLException {
+    private void sendDataToServer(String username, String password, String confirmPassword, String email, String refferalID) throws SQLException, UnknownHostException {
         Connection con = null;
         try {
-            
+         InetAddress ipAddress = InetAddress.getLocalHost();
+         String hostAddress = ipAddress.getHostAddress();
+         con = DriverManager.getConnection("jdbc:mysql://localhost/alpha", "root", "");
         if (username.length() < 6 || username.length() > 20) {
             JOptionPane.showMessageDialog(null, "Username must be between 6 and 20 characters.");
             return;
         }
 
+        String checkQuery = "SELECT COUNT(*) FROM accounts WHERE account_name = ?";
+        PreparedStatement checkStatement = con.prepareStatement(checkQuery);
+        checkStatement.setString(1, username);
+        ResultSet resultSet = checkStatement.executeQuery();
+
+        if (resultSet.next() && resultSet.getInt(1) > 0) {
+            JOptionPane.showMessageDialog(null, "Username is already taken. Please choose a different one.");
+            return;
+        }
+
+        String checkQuery2 = "SELECT COUNT(*) FROM accounts WHERE mail = ?";
+        PreparedStatement checkStatement2 = con.prepareStatement(checkQuery2);
+        checkStatement.setString(1, email);
+        ResultSet resultSet2 = checkStatement2.executeQuery();
+
+        if (resultSet2.next() && resultSet2.getInt(1) > 0) {
+            JOptionPane.showMessageDialog(null, "Email address is already in use. Please use a different one.");
+            return;
+        }
+                
+        
         String passwordRegex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$";
         if (!password.matches(passwordRegex)) {
-            JOptionPane.showMessageDialog(null, "Password must have at least one uppercase letter, one number, one special character, and be at least 8 characters long.");
+            JOptionPane.showMessageDialog(null, "Password must have at least:\n - one uppercase letter\n - one number\n - one special character\n - be at least 8 characters long");
             return;
         }
         
@@ -223,16 +252,38 @@ public class IntroPage extends JFrame{
             JOptionPane.showMessageDialog(null, "Please enter a valid Yahoo or Gmail address.\n Any other type of address is not accepted.");
             return;
         }
+
+        if (refferalID.isEmpty()) {
+            refferalID = null; 
+        } else {
+           
+            String checkReferralQuery = "SELECT id FROM accounts WHERE account_name = ?";
+            PreparedStatement checkReferralStatement = con.prepareStatement(checkReferralQuery);
+            checkReferralStatement.setString(1, refferalID);
+
+            ResultSet referralResult = checkReferralStatement.executeQuery();
+            if (referralResult.next()) {
+                refferalID = referralResult.getString("id");
+            } else {
+                refferalID = null; 
+            }
+        }
+
+        if (!checkBox.isSelected()) {
+            JOptionPane.showMessageDialog(null, "You must agree to the terms and conditions.");
+            return;
+        }
         
             con = DriverManager.getConnection("jdbc:mysql://localhost/alpha", "root", "");
 
-            String insertQuery = "INSERT INTO accounts (account_name, password, mail, reffered_by) VALUES (?, ?, ?, ?)";
+            String insertQuery = "INSERT INTO accounts (account_name, password, mail, reffered_by, ip_address) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement preparedStatement = con.prepareStatement(insertQuery);
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, password);
             preparedStatement.setString(3, email);
             preparedStatement.setString(4, refferalID);
-
+            preparedStatement.setString(5, hostAddress);
+            
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
@@ -241,7 +292,6 @@ public class IntroPage extends JFrame{
                 JOptionPane.showMessageDialog(null, "Error during registration. Please try again later.");
             }
         } catch (SQLException e) {
-            e.printStackTrace();
         } finally {
             if (con != null) {
                 con.close();
