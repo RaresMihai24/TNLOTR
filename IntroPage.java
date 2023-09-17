@@ -8,6 +8,13 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.io.File;
+import java.io.IOException;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 
 
@@ -32,7 +39,12 @@ public class IntroPage extends JFrame{
     JPanel registerPanel = new JPanel();
     JPanel selectLanguage = new JPanel();
 
-    public IntroPage() {
+    public IntroPage() throws LineUnavailableException, UnsupportedAudioFileException, IOException {
+        File soundFile = new File("IntroSong.wav");
+        AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundFile);
+        Clip clip = AudioSystem.getClip();
+        clip.open(audioIn);
+        clip.start();
         frame = new JFrame("TNLOTR");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -161,6 +173,9 @@ public class IntroPage extends JFrame{
 
         return passwordField;
     }
+    
+    
+    
 }
     
 
