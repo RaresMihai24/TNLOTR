@@ -1,4 +1,4 @@
-package tnlotr;
+package com.mycompany.tnlotr1;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -10,6 +10,9 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -39,12 +42,16 @@ public class IntroPage extends JFrame{
     JPanel registerPanel = new JPanel();
     JPanel selectLanguage = new JPanel();
 
-    public IntroPage() throws LineUnavailableException, UnsupportedAudioFileException, IOException {
-        File soundFile = new File("IntroSong.wav");
+    public IntroPage() throws LineUnavailableException, UnsupportedAudioFileException, IOException, SQLException {
+        File soundFile = new File("C:\\Users\\Rares\\Documents\\NetBeansProjects\\TNLOTR1\\IntroSong.wav");
         AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundFile);
         Clip clip = AudioSystem.getClip();
         clip.open(audioIn);
         clip.start();
+        //System.out.println("Working Directory = " + System.getProperty("user.dir"));
+        Connection con = null;
+        con = DriverManager.getConnection("jdbc:mysql://localhost/alpha","root", "");
+        
         frame = new JFrame("TNLOTR");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -64,7 +71,7 @@ public class IntroPage extends JFrame{
         refferalID.setPreferredSize(new Dimension(160, 30));
         JCheckBox checkBox = new JCheckBox("I agree to the terms and conditions");
         JCheckBox checkBox2 = new JCheckBox("Remember me");
-        backgroundImage = new ImageIcon("background.jpg").getImage();
+        backgroundImage = new ImageIcon("C:\\Users\\Rares\\Documents\\NetBeansProjects\\TNLOTR1\\background.jpg").getImage();
 
         usernameLogin.setHorizontalAlignment(JTextField.CENTER);
         passwordLogin.setHorizontalAlignment(JTextField.CENTER);
