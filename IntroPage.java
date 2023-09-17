@@ -225,16 +225,6 @@ public class IntroPage extends JFrame{
             return;
         }
 
-        String checkQuery2 = "SELECT COUNT(*) FROM accounts WHERE mail = ?";
-        PreparedStatement checkStatement2 = con.prepareStatement(checkQuery2);
-        checkStatement.setString(1, email);
-        ResultSet resultSet2 = checkStatement2.executeQuery();
-
-        if (resultSet2.next() && resultSet2.getInt(1) > 0) {
-            JOptionPane.showMessageDialog(null, "Email address is already in use. Please use a different one.");
-            return;
-        }
-                
         
         String passwordRegex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$";
         if (!password.matches(passwordRegex)) {
@@ -253,6 +243,17 @@ public class IntroPage extends JFrame{
             return;
         }
 
+        String checkQuery2 = "SELECT COUNT(*) FROM accounts WHERE mail = ?";
+        PreparedStatement checkStatement2 = con.prepareStatement(checkQuery2);
+        checkStatement2.setString(1, email);
+        ResultSet resultSet2 = checkStatement2.executeQuery();
+
+        if (resultSet2.next() && resultSet2.getInt(1) > 0) {
+            JOptionPane.showMessageDialog(null, "Email address is already in use. Please use a different one.");
+            return;
+        }
+                
+        
         if (refferalID.isEmpty()) {
             refferalID = null; 
         } else {
