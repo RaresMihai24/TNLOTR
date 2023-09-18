@@ -13,6 +13,7 @@ import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.PasswordAuthentication;
 import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,6 +24,12 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -59,20 +66,6 @@ public class IntroPage extends JFrame{
         Clip clip = AudioSystem.getClip();
         clip.open(audioIn);
         clip.start();
-
-        Properties props = new Properties();
-        props.put("mail.smtp.host", "smtp.example.com");  // SMTP server address
-        props.put("mail.smtp.port", "587");              // Port for TLS
-        props.put("mail.smtp.auth", "true");             // Enable authentication
-        props.put("mail.smtp.starttls.enable", "true");  // Enable TLS
-
-        javax.mail.Session mailSession = javax.mail.Session.getInstance(props, new javax.mail.Authenticator() {
-        @Override
-        protected javax.mail.PasswordAuthentication getPasswordAuthentication() {
-            return new javax.mail.PasswordAuthentication("your_email@example.com", "youremailpassword");
-                    }
-                }
-            );
         
         frame = new JFrame("TNLOTR");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -311,6 +304,7 @@ public class IntroPage extends JFrame{
             int rowsAffected = preparedStatement.executeUpdate();
 
             if (rowsAffected > 0) {
+                sendEmail(email, vcode);
                 JOptionPane.showMessageDialog(null, "Registration successful!");
             } else {
                 JOptionPane.showMessageDialog(null, "Error during registration. Please try again later.");
@@ -324,9 +318,45 @@ public class IntroPage extends JFrame{
         }
     }
     
-    private String generateRandomVerificationCode() {
-    // Generate a random 6-digit number as the verification code
+    private String generateRandomVerificationCode() 
+    {
     return String.format("%06d", new Random().nextInt(1000000));
+    }
+    
+private void sendEmail(String recipientEmail, String verificationCode) {
+    Properties props = new Properties();
+    props.put("mail.smtp.host", "smtp.gmail.com");  
+    props.put("mail.smtp.port", "587");   
+    props.put("mail.smtp.auth", "true");    
+    props.put("mail.smtp.starttls.enable", "true"); 
+
+    javax.mail.Session mailSession = javax.mail.Session.getInstance(props, new javax.mail.Authenticator() {
+        @Override
+        protected javax.mail.PasswordAuthentication getPasswordAuthentication() {
+            return new javax.mail.PasswordAuthentication("zzzzzzzzzzzzzzzz", "yyyyyyyyyyyyyyyy");
+        }
+    });
+
+    try {
+        Message message = new MimeMessage(mailSession);
+        message.setFrom(new InternetAddress("zzzzzzzzzzzz.com")); 
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
+        message.setSubject("Account Verification");
+        message.setText("""
+                        Hello :),
+                        
+                        Your account on Totally Not Lord of The Rings has been registered successfully.
+                        Do not delete this e-mail, you will be prompted to verify your account first time when you will log in.
+                        
+                        Your verification code is: """ + verificationCode);
+
+        Transport.send(message);
+
+        System.out.println("Email sent successfully");
+
+    } catch (MessagingException e) {
+        e.printStackTrace();
+    }
 }
     
 }
