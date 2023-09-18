@@ -19,6 +19,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Properties;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sound.sampled.AudioInputStream;
@@ -57,6 +59,20 @@ public class IntroPage extends JFrame{
         Clip clip = AudioSystem.getClip();
         clip.open(audioIn);
         clip.start();
+
+        Properties props = new Properties();
+        props.put("mail.smtp.host", "smtp.example.com");  // SMTP server address
+        props.put("mail.smtp.port", "587");              // Port for TLS
+        props.put("mail.smtp.auth", "true");             // Enable authentication
+        props.put("mail.smtp.starttls.enable", "true");  // Enable TLS
+
+        javax.mail.Session mailSession = javax.mail.Session.getInstance(props, new javax.mail.Authenticator() {
+        @Override
+        protected javax.mail.PasswordAuthentication getPasswordAuthentication() {
+            return new javax.mail.PasswordAuthentication("your_email@example.com", "youremailpassword");
+                    }
+                }
+            );
         
         frame = new JFrame("TNLOTR");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -204,86 +220,93 @@ public class IntroPage extends JFrame{
         return passwordField;
     }
     
-    private void sendDataToServer(String username, String password, String confirmPassword, String email, String refferalID) throws SQLException, UnknownHostException {
+    private void sendDataToServer(String username, String password, String confirmPassword, String email, String referralID) throws SQLException, UnknownHostException {
         Connection con = null;
         try {
-         InetAddress ipAddress = InetAddress.getLocalHost();
-         String hostAddress = ipAddress.getHostAddress();
-         con = DriverManager.getConnection("jdbc:mysql://localhost/alpha", "root", "");
-        if (username.length() < 6 || username.length() > 20) {
-            JOptionPane.showMessageDialog(null, "Username must be between 6 and 20 characters.");
-            return;
-        }
-
-        String checkQuery = "SELECT COUNT(*) FROM accounts WHERE account_name = ?";
-        PreparedStatement checkStatement = con.prepareStatement(checkQuery);
-        checkStatement.setString(1, username);
-        ResultSet resultSet = checkStatement.executeQuery();
-
-        if (resultSet.next() && resultSet.getInt(1) > 0) {
-            JOptionPane.showMessageDialog(null, "Username is already taken. Please choose a different one.");
-            return;
-        }
-
-        
-        String passwordRegex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$";
-        if (!password.matches(passwordRegex)) {
-            JOptionPane.showMessageDialog(null, "Password must have at least:\n - one uppercase letter\n - one number\n - one special character\n - be at least 8 characters long");
-            return;
-        }
-        
-        if (!password.equals(confirmPassword)) {
-            JOptionPane.showMessageDialog(null, "Passwords do not match.");
-            return;
-        }
-        
-         String emailRegex = "^(.+)@(yahoo\\.com|gmail\\.com)$";
-        if (!email.matches(emailRegex)) {
-            JOptionPane.showMessageDialog(null, "Please enter a valid Yahoo or Gmail address.\n Any other type of address is not accepted.");
-            return;
-        }
-
-        String checkQuery2 = "SELECT COUNT(*) FROM accounts WHERE mail = ?";
-        PreparedStatement checkStatement2 = con.prepareStatement(checkQuery2);
-        checkStatement2.setString(1, email);
-        ResultSet resultSet2 = checkStatement2.executeQuery();
-
-        if (resultSet2.next() && resultSet2.getInt(1) > 0) {
-            JOptionPane.showMessageDialog(null, "Email address is already in use. Please use a different one.");
-            return;
-        }
-                
-        
-        if (refferalID.isEmpty()) {
-            refferalID = null; 
-        } else {
-           
-            String checkReferralQuery = "SELECT id FROM accounts WHERE account_name = ?";
-            PreparedStatement checkReferralStatement = con.prepareStatement(checkReferralQuery);
-            checkReferralStatement.setString(1, refferalID);
-
-            ResultSet referralResult = checkReferralStatement.executeQuery();
-            if (referralResult.next()) {
-                refferalID = referralResult.getString("id");
-            } else {
-                refferalID = null; 
-            }
-        }
-
-        if (!checkBox.isSelected()) {
-            JOptionPane.showMessageDialog(null, "You must agree to the terms and conditions.");
-            return;
-        }
-        
+            InetAddress ipAddress = InetAddress.getLocalHost();
+            String hostAddress = ipAddress.getHostAddress();
             con = DriverManager.getConnection("jdbc:mysql://localhost/alpha", "root", "");
+            if (username.length() < 6 || username.length() > 20) 
+            {
+                JOptionPane.showMessageDialog(null, "Username must be between 6 and 20 characters.");
+                return;
+            }
 
-            String insertQuery = "INSERT INTO accounts (account_name, password, mail, reffered_by, ip_address) VALUES (?, ?, ?, ?, ?)";
+            String checkQuery = "SELECT COUNT(*) FROM accounts WHERE account_name = ?";
+            PreparedStatement checkStatement = con.prepareStatement(checkQuery);
+            checkStatement.setString(1, username);
+            ResultSet resultSet = checkStatement.executeQuery();
+
+            if (resultSet.next() && resultSet.getInt(1) > 0) 
+            {
+                JOptionPane.showMessageDialog(null, "Username is already taken. Please choose a different one.");
+                return;
+            }
+
+        
+            String passwordRegex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$";
+            if (!password.matches(passwordRegex)) 
+            {
+                JOptionPane.showMessageDialog(null, "Password must have at least:\n - one uppercase letter\n - one number\n - one special character\n - be at least 8 characters long");
+                return;
+            }
+        
+            if (!password.equals(confirmPassword)) 
+            {
+                JOptionPane.showMessageDialog(null, "Passwords do not match.");
+                return;
+            }
+        
+            String emailRegex = "^(.+)@(yahoo\\.com|gmail\\.com)$";
+            if (!email.matches(emailRegex)) 
+            {
+                JOptionPane.showMessageDialog(null, "Please enter a valid Yahoo or Gmail address.\n Any other type of address is not accepted.");
+                return;
+            }
+
+            String checkQuery2 = "SELECT COUNT(*) FROM accounts WHERE mail = ?";
+            PreparedStatement checkStatement2 = con.prepareStatement(checkQuery2);
+            checkStatement2.setString(1, email);
+            ResultSet resultSet2 = checkStatement2.executeQuery();
+
+            if (resultSet2.next() && resultSet2.getInt(1) > 0) 
+            {
+                JOptionPane.showMessageDialog(null, "Email address is already in use. Please use a different one.");
+                return;
+            }
+
+            if (!referralID.isEmpty()) {
+                String checkReferralQuery = "SELECT COUNT(*) FROM accounts WHERE account_name = ?";
+                PreparedStatement checkReferralStatement = con.prepareStatement(checkReferralQuery);
+                checkReferralStatement.setString(1, referralID);
+                ResultSet referralResultSet = checkReferralStatement.executeQuery();
+
+                if (!referralResultSet.next() || referralResultSet.getInt(1) == 0) {
+                    JOptionPane.showMessageDialog(null, "Referral ID does not exist. Please enter a valid one.");
+                    return;
+                }
+            } else {
+                referralID = "";
+            }
+
+             if (!checkBox.isSelected()) {
+                JOptionPane.showMessageDialog(null, "You must agree to the terms and conditions.");
+                return;
+            }
+        
+            String vcode = generateRandomVerificationCode();
+            String insertReferralQuery = "INSERT INTO refferal_manager (refferal_id, reffered_player) VALUES (?, ?)";
+            PreparedStatement referralPreparedStatement = con.prepareStatement(insertReferralQuery);
+            referralPreparedStatement.setString(1, referralID);
+            referralPreparedStatement.setString(2, username);
+            int rowsAffected1 = referralPreparedStatement.executeUpdate();
+            String insertQuery = "INSERT INTO accounts (account_name, password, mail, ip_address, vcode) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement preparedStatement = con.prepareStatement(insertQuery);
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, password);
             preparedStatement.setString(3, email);
-            preparedStatement.setString(4, refferalID);
-            preparedStatement.setString(5, hostAddress);
+            preparedStatement.setString(4, hostAddress);
+            preparedStatement.setString(5, vcode);
             
             int rowsAffected = preparedStatement.executeUpdate();
 
@@ -293,6 +316,7 @@ public class IntroPage extends JFrame{
                 JOptionPane.showMessageDialog(null, "Error during registration. Please try again later.");
             }
         } catch (SQLException e) {
+            e.printStackTrace();
         } finally {
             if (con != null) {
                 con.close();
@@ -300,7 +324,10 @@ public class IntroPage extends JFrame{
         }
     }
     
-    
+    private String generateRandomVerificationCode() {
+    // Generate a random 6-digit number as the verification code
+    return String.format("%06d", new Random().nextInt(1000000));
+}
     
 }
     
