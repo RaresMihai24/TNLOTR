@@ -2,12 +2,8 @@ package com.mycompany.tnlotr1;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.sql.SQLException;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 
-public class IntroPage extends JFrame {
+public class IntroPage extends JFrame implements LoginEventListener{
     private Image backgroundImage;
     private final JFrame frame;
     private final int width = 1920;
@@ -19,11 +15,10 @@ public class IntroPage extends JFrame {
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         }
     };
-    private final LoginPanel loginPanel = new LoginPanel();
-    private final RegisterPanel registerPanel = new RegisterPanel();
-
-    public IntroPage() throws LineUnavailableException, UnsupportedAudioFileException, IOException, SQLException {
-
+        LoginPanel loginPanel = new LoginPanel();
+        RegisterPanel registerPanel = new RegisterPanel();
+    public IntroPage() {
+        loginPanel.setLoginEventListener(this);
         frame = new JFrame("TNLOTR");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -42,6 +37,16 @@ public class IntroPage extends JFrame {
         frame.setContentPane(contentPane);
         frame.setSize(width, height);
         frame.setResizable(false);
+        frame.setVisible(true);
+    }
+
+    @Override
+    public void onLoginButtonClicked(String username, String password) {
+        backgroundImage = new ImageIcon("C:\\Users\\Rares\\Documents\\NetBeansProjects\\TNLOTR1\\blank.jpg").getImage();
+        contentPane.remove(loginPanel); 
+        contentPane.remove(registerPanel); 
+        frame.revalidate();
+        frame.repaint();
         frame.setVisible(true);
     }
 
