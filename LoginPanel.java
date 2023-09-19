@@ -28,6 +28,7 @@ public class LoginPanel extends JPanel {
     private JPasswordField passwordLogin;
     private JButton buttonLogin;
     private JCheckBox checkBox2;
+    private LoginEventListener loginEventListener;
 
     public LoginPanel() {
         usernameLogin = createPlaceholderTextField("Username");
@@ -72,15 +73,12 @@ buttonLogin.addActionListener(new ActionListener() {
                 if (checkBox2.isSelected()) {
                     saveCredentialsToFile(username, password);
                 }
-                
                 JOptionPane.showMessageDialog(null, "Login performed succesfully. Entering the game in a second.");
-                
+                loginEventListener.onLoginButtonClicked(username, password);
             } else {
-                JOptionPane.showMessageDialog(null, "Invalid username or password.");
+                JOptionPane.showMessageDialog(null, "Login failed.");
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(IntroPage.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
+        } catch (SQLException | IOException ex) {
             Logger.getLogger(IntroPage.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -167,26 +165,37 @@ buttonLogin.addActionListener(new ActionListener() {
     
     private boolean verifyLogin(String username, String password) throws SQLException {
     Connection con = null;
-    PreparedStatement preparedStatement = null;
-    ResultSet resultSet = null;
+    con = DriverManager.getConnection("jdbc:mysql://localhost/alpha", "root", "");
+    String query = "SELECT * FROM accounts WHERE account_name = ? AND password = ?";
+    PreparedStatement preparedStatement = con.prepareStatement(query);
+    preparedStatement.setString(1, username);
+    preparedStatement.setString(2, password);
+    ResultSet resultSet = preparedStatement.executeQuery();
 
-    try {
-        con = DriverManager.getConnection("jdbc:mysql://localhost/alpha", "root", "");
+    if (resultSet.next()) {
+        String isVerified = resultSet.getString("isVerified");
+        if (isVerified.equals("DISABLED")) {
+            String vcode = resultSet.getString("vcode");
+            String userInput = JOptionPane.showInputDialog("Enter the verification code sent to your email:");
 
-        String query = "SELECT COUNT(*) FROM accounts WHERE account_name = ? AND password = ?";
-        preparedStatement = con.prepareStatement(query);
-        preparedStatement.setString(1, username);
-        preparedStatement.setString(2, password);
-
-        resultSet = preparedStatement.executeQuery();
-
-        return resultSet.next() && resultSet.getInt(1) > 0;
-    } finally {
-        if (resultSet != null) resultSet.close();
-        if (preparedStatement != null) preparedStatement.close();
-        if (con != null) con.close();
+            if (userInput != null && userInput.equals(vcode)) {
+                String updateQuery = "UPDATE accounts SET isVerified = 'ENABLED' WHERE account_name = ?";
+                PreparedStatement updateStatement = con.prepareStatement(updateQuery);
+                updateStatement.setString(1, username);
+                updateStatement.executeUpdate();
+                return true;
+            } else {
+                JOptionPane.showMessageDialog(null, "Invalid verification code. Please try again.");
+                return false;
+            }
+        } else {
+            return true;
+        }
+    } else {
+        return false; 
     }
 }
+
     
 private void saveCredentialsToFile(String username, String password) throws IOException {
     BufferedWriter writer = new BufferedWriter(new FileWriter("saved_account.txt"));
@@ -207,6 +216,8 @@ void loadCredentialsFromFile() {
         e.printStackTrace();
     }
 }
-    
+        public void setLoginEventListener(LoginEventListener listener) {
+        this.loginEventListener = listener;
+        }
     
 }
