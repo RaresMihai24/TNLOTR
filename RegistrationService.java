@@ -15,7 +15,7 @@ import javax.swing.JOptionPane;
 public class RegistrationService {
 
     public static boolean registerUser(String username, String password, String confirmPassword, String email, String referralID, JCheckBox checkbox) throws SQLException, UnknownHostException {
-        Connection con = null;
+            Connection con = null;
             InetAddress ipAddress = InetAddress.getLocalHost();
             String hostAddress = ipAddress.getHostAddress();
             con = DriverManager.getConnection("jdbc:mysql://localhost/alpha", "root", "");
@@ -80,6 +80,7 @@ if (!referralID.equals("Referral ID")) {
 
              if (!checkbox.isSelected()) {
                 JOptionPane.showMessageDialog(null, "You must agree to the terms and conditions.");
+                return false;
             }
         
         try {
